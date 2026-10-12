@@ -1,0 +1,6 @@
+<resources>
+    <color name="primary">#5B8CFF</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="danger">#E24C4C</color>
+</resources>

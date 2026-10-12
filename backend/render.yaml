@@ -1,0 +1,38 @@
+# One-click-ish deploy on Render (free plan).
+# In Render: New + -> Blueprint -> connect this repo. Then set the env vars
+# (from .env.example) in the dashboard. Render gives you the PUBLIC_URL.
+services:
+  - type: web
+    name: fakegps-backend
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: APP_NAME
+        value: Fake GPS
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PRICE_ID
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: PUBLIC_URL
+        sync: false
+      - key: APP_DOWNLOAD_URL
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_SECURE
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: MAIL_FROM
+        sync: false
