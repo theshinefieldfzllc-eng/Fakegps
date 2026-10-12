@@ -16,7 +16,7 @@ object ApiClient {
     //  IMPORTANT: Yahan apni backend URL daalein (Render se milegi).
     //  Trailing slash NAHI. Example: "https://fakegps-backend.onrender.com"
     // ============================================================
-    const val BASE_URL = "https://your-app.onrender.com"
+    const val BASE_URL = "https://fakegps-backend.onrender.com"
 
     private val client = OkHttpClient()
     private val JSON = "application/json; charset=utf-8".toMediaType()
