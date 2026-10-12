@@ -162,6 +162,34 @@ function isActive(user) {
   return true;
 }
 
+// ---- Admin: manually create/reset a login WITHOUT payment. Protected by ADMIN_KEY. ----
+// Open in a browser:  <PUBLIC_URL>/api/admin/grant?key=YOUR_ADMIN_KEY&email=someone@example.com
+app.get("/api/admin/grant", async (req, res) => {
+  if (!process.env.ADMIN_KEY || req.query.key !== process.env.ADMIN_KEY) {
+    return res.status(401).send("Unauthorized");
+  }
+  const email = String(req.query.email || "").trim();
+  if (!email) return res.status(400).send("Missing ?email=");
+  try {
+    const password = randomPassword();
+    const passwordHash = await bcrypt.hash(password, 10);
+    const existing = store.findByEmail(email);
+    store.upsertUser({
+      ...(existing || {}),
+      email,
+      passwordHash,
+      active: true,
+      currentPeriodEnd: Date.now() + 365 * 24 * 60 * 60 * 1000,
+      createdAt: existing ? existing.createdAt : Date.now(),
+    });
+    await sendLoginEmail(email, password);
+    res.send(`OK. A fresh login has been emailed to ${email}.`);
+  } catch (e) {
+    console.error("admin grant error:", e);
+    res.status(500).send("Error: " + e.message);
+  }
+});
+
 app.get("/health", (req, res) => res.json({ ok: true }));
 
 const PORT = process.env.PORT || 3000;
