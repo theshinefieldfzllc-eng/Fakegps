@@ -1,6 +1,7 @@
 package com.irfan.fakegps
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -12,10 +13,12 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.google.android.gms.location.LocationServices
 import org.osmdroid.config.Configuration
 import org.osmdroid.events.MapEventsReceiver
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.tileprovider.tilesource.OnlineTileSourceBase
 import org.osmdroid.util.GeoPoint
+import org.osmdroid.util.MapTileIndex
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
@@ -26,6 +29,21 @@ class MapActivity : AppCompatActivity() {
     private lateinit var coordsTv: TextView
     private var marker: Marker? = null
     private var selected: GeoPoint? = null
+
+    private val fused by lazy { LocationServices.getFusedLocationProviderClient(this) }
+
+    // Esri World Street Map -> English (Latin) labels worldwide.
+    private val englishTiles = object : OnlineTileSourceBase(
+        "EsriWorldStreetMap", 0, 19, 256, "",
+        arrayOf("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/")
+    ) {
+        override fun getTileURLString(pMapTileIndex: Long): String {
+            return "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/" +
+                MapTileIndex.getZoom(pMapTileIndex) + "/" +
+                MapTileIndex.getY(pMapTileIndex) + "/" +
+                MapTileIndex.getX(pMapTileIndex)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,7 +56,7 @@ class MapActivity : AppCompatActivity() {
 
         coordsTv = findViewById(R.id.coords)
         map = findViewById(R.id.map)
-        map.setTileSource(TileSourceFactory.MAPNIK)
+        map.setTileSource(englishTiles)
         map.setMultiTouchControls(true)
         map.controller.setZoom(5.0)
         map.controller.setCenter(GeoPoint(25.2048, 55.2708)) // Dubai default
@@ -52,6 +70,7 @@ class MapActivity : AppCompatActivity() {
         }
         map.overlays.add(MapEventsOverlay(receiver))
 
+        findViewById<Button>(R.id.myLocBtn).setOnClickListener { goToMyLocation() }
         findViewById<Button>(R.id.startBtn).setOnClickListener { start() }
         findViewById<Button>(R.id.stopBtn).setOnClickListener { stop() }
         findViewById<Button>(R.id.logoutBtn).setOnClickListener {
@@ -75,10 +94,38 @@ class MapActivity : AppCompatActivity() {
         coordsTv.text = "Selected: %.5f, %.5f".format(p.latitude, p.longitude)
     }
 
+    // "My Location" button: jump map to where the phone really is.
+    @SuppressLint("MissingPermission")
+    private fun goToMyLocation() {
+        if (!hasLocationPerm()) {
+            requestPerms()
+            return
+        }
+        Toast.makeText(this, "Location dhoond rahe hain…", Toast.LENGTH_SHORT).show()
+        fused.lastLocation
+            .addOnSuccessListener { loc ->
+                if (loc != null) {
+                    val p = GeoPoint(loc.latitude, loc.longitude)
+                    map.controller.setZoom(16.0)
+                    map.controller.animateTo(p)
+                    setSelected(p)
+                } else {
+                    Toast.makeText(
+                        this,
+                        "Location nahi mili. GPS on karke, bahar/khidki ke paas ja ke phir try karein.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Location error", Toast.LENGTH_SHORT).show()
+            }
+    }
+
     private fun start() {
         val p = selected
         if (p == null) {
-            Toast.makeText(this, "Pehle map pe location choose karein", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Pehle map pe location choose karein (ya My Location dabayein)", Toast.LENGTH_SHORT).show()
             return
         }
         val token = Prefs.token(this) ?: run { goLogin(); return }
@@ -117,6 +164,10 @@ class MapActivity : AppCompatActivity() {
         startActivity(Intent(this, LoginActivity::class.java))
         finish()
     }
+
+    private fun hasLocationPerm(): Boolean =
+        ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED
 
     private fun requestPerms() {
         val perms = mutableListOf(

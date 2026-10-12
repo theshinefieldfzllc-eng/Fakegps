@@ -1,6 +1,7 @@
 package com.irfan.fakegps
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
@@ -40,6 +41,15 @@ class LoginActivity : AppCompatActivity() {
         }
 
         btn.setOnClickListener { doLogin() }
+
+        // Naya user? App ke andar se subscribe (payment) -> login email aa jayegi.
+        findViewById<Button>(R.id.subscribeBtn).setOnClickListener {
+            try {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(ApiClient.BASE_URL + "/")))
+            } catch (e: Exception) {
+                Toast.makeText(this, "Browser nahi khula", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun doLogin() {

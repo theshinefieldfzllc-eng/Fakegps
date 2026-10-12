@@ -16,11 +16,18 @@
         android:orientation="vertical"
         android:padding="12dp">
 
+        <Button
+            android:id="@+id/myLocBtn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="📍 My Location" />
+
         <TextView
             android:id="@+id/coords"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Tap on the map to choose a location"
+            android:text="Tap the map, or press My Location, to choose a spot"
+            android:layout_marginTop="8dp"
             android:layout_marginBottom="10dp" />
 
         <LinearLayout
@@ -49,5 +56,13 @@
                 android:layout_weight="1"
                 android:text="Logout" />
         </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Map © Esri, OpenStreetMap"
+            android:textSize="10sp"
+            android:layout_marginTop="6dp"
+            android:alpha="0.6" />
     </LinearLayout>
 </LinearLayout>
